@@ -4,26 +4,10 @@ const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let dbComplaints = [];
-let students = {};
 let studentRealtimeInitialized = false;
 
-// ===== Load Student Dataset =====
-async function loadStudents() {
-  try {
-    const res = await fetch('Chevella Student Data - Sheet1.json');
-    const data = await res.json();
-    data.forEach(s => {
-      if (s["NIAT ID"]) {
-        students[s["NIAT ID"].trim().toUpperCase()] = s["Student Full Name"];
-      }
-    });
-  } catch (err) {
-    console.error("Failed to load Chevella Student Data - Sheet1.json", err);
-  }
-}
-
 // ===== Student ID Management (NIAT ID) =====
-function getStudentId() {
+async function getStudentId() {
   // Try to get from localStorage first, then sessionStorage as backup
   let id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
 
@@ -33,13 +17,20 @@ function getStudentId() {
     // Validation: At least 5 characters and must be in our dataset
     if (!id || id.trim().toUpperCase().length < 5) {
       alert("Please enter a valid NIAT ID");
-      return getStudentId(); // Re-prompt
+      return await getStudentId(); // Re-prompt
     }
     
     const formattedId = id.trim().toUpperCase();
-    if (!students[formattedId]) {
+    
+    const { data, error } = await supabaseClient
+      .from('students')
+      .select('student_name')
+      .eq('niat_id', formattedId)
+      .single();
+
+    if (error || !data) {
       alert("Invalid NIAT ID. Please contact the administrator.");
-      return getStudentId();
+      return await getStudentId();
     }
 
     id = formattedId;
@@ -246,18 +237,20 @@ function recordFirewallSubmit() {
 }
 
 // ===== Form Validation & Submission =====
-complaintForm.addEventListener('submit', (e) => {
+complaintForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const description = document.getElementById('description').value;
+
+  const isValid = await validateForm();
   const name = document.getElementById('studentName').value;
 
-  if (checkFirewall(description, name) && validateForm()) {
+  if (isValid && checkFirewall(description, name)) {
     submitComplaint();
   }
 });
 
-function validateForm() {
+async function validateForm() {
   let valid = true;
 
   const niatId = document.getElementById('niatId');
@@ -270,9 +263,23 @@ function validateForm() {
   // Reset errors
   clearErrors();
 
-  if (!students[niatId.value.trim().toUpperCase()]) {
+  const formattedId = niatId.value.trim().toUpperCase();
+  if (formattedId.length < 5) {
     showError(niatId, 'errNiat');
     valid = false;
+  } else {
+    const { data, error } = await supabaseClient
+      .from('students')
+      .select('student_name')
+      .eq('niat_id', formattedId)
+      .single();
+      
+    if (error || !data) {
+      showError(niatId, 'errNiat');
+      valid = false;
+    } else {
+      name.value = data.student_name;
+    }
   }
 
   if (!room.value.trim()) {
@@ -325,21 +332,41 @@ function clearErrors() {
 });
 
 // Auto-fill student name
+let debounceTimer;
 document.getElementById('niatId').addEventListener('input', function () {
+  clearTimeout(debounceTimer);
   const id = this.value.trim().toUpperCase();
   const nameField = document.getElementById('studentName');
-  if (students[id]) {
-    nameField.value = students[id];
-    nameField.classList.remove('error');
-    document.getElementById('errNiat').classList.remove('show');
-  } else {
+  
+  if (id.length < 5) {
     nameField.value = '';
+    return;
   }
+
+  debounceTimer = setTimeout(async () => {
+    try {
+      const { data, error } = await supabaseClient
+        .from('students')
+        .select('student_name')
+        .eq('niat_id', id)
+        .single();
+        
+      if (data && !error) {
+        nameField.value = data.student_name;
+        nameField.classList.remove('error');
+        document.getElementById('errNiat').classList.remove('show');
+      } else {
+        nameField.value = '';
+      }
+    } catch (e) {
+      nameField.value = '';
+    }
+  }, 500);
 });
 
 // ===== Submit Complaint =====
 async function submitComplaint() {
-  const user_id = getStudentId();
+  const user_id = await getStudentId();
   if (!user_id) return;
 
   // Form Field Validation & Trimming
@@ -464,7 +491,7 @@ async function deleteComplaint(id) {
 
 // ===== Supabase Fetch =====
 async function fetchComplaints() {
-  const user_id = getStudentId();
+  const user_id = await getStudentId();
   if (!user_id) return;
 
   try {
@@ -692,11 +719,8 @@ function setupRealtime(user_id) {
 
 // ===== Init =====
 async function init() {
-  // Load student dataset
-  await loadStudents();
-
   // Ensure ID exists before doing anything
-  const user_id = getStudentId();
+  const user_id = await getStudentId();
   if (!user_id) return;
 
   // 1. Initial Load

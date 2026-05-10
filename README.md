@@ -54,7 +54,9 @@ This project is fully ready for GitHub and Netlify deployment with relative path
 
 To ensure full functionality, configure your Supabase project as follows:
 
-### 1. Database Schema (`complaints` table)
+### 1. Database Schema
+
+**A. `complaints` table:**
 - `id` (uuid, primary key)
 - `created_at` (timestamp)
 - `user_id` (text)
@@ -68,14 +70,28 @@ To ensure full functionality, configure your Supabase project as follows:
 - `remarks` (text)
 - `is_deleted` (boolean) - default: false
 
+**B. `students` table:**
+- `id` (uuid, primary key)
+- `niat_id` (text, unique)
+- `student_name` (text)
+*(Note: Import your Chevella Student Data JSON directly into this table).*
+
 ### 2. Row Level Security (RLS) Policies (CRITICAL)
 
-Ensure your `complaints` table has RLS enabled to prevent unauthorized access. Run the following in your Supabase SQL Editor:
+Ensure your tables have RLS enabled to prevent unauthorized access. Run the following in your Supabase SQL Editor:
 
 ```sql
 -- Enable RLS
 ALTER TABLE complaints ENABLE ROW LEVEL SECURITY;
+ALTER TABLE students ENABLE ROW LEVEL SECURITY;
 
+-- STUDENTS TABLE POLICIES
+-- Allow anyone to read a specific student's name by NIAT ID
+CREATE POLICY "Public read access to student names"
+ON students FOR SELECT 
+USING (true);
+
+-- COMPLAINTS TABLE POLICIES
 -- 1. Students can insert complaints
 CREATE POLICY "Students can insert complaints" 
 ON complaints FOR INSERT 
