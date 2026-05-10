@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hostel Admin Dashboard</title>
+    <link rel="stylesheet" href="admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Password Overlay -->
+    <div id="auth-overlay" class="auth-overlay">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo"><i class="fa-solid fa-shield-halved"></i></div>
+                <h2>Admin Login</h2>
+                <p>Secure access to the Hostel Dashboard</p>
+            </div>
+            
+            <div class="auth-body">
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="email" id="admin-email" placeholder="Email Address">
+                </div>
+                
+                <div class="password-field">
+                    <i class="fa-solid fa-key"></i>
+                    <input type="password" id="admin-password" placeholder="Password">
+                    <i class="fa-solid fa-eye" id="toggle-password"></i>
+                </div>
+                
+                <button id="login-btn" class="login-button">
+                    <span>Login</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+                
+                <button id="back-btn" class="secondary-button">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Back to Home</span>
+                </button>
+                
+                <p id="auth-error" class="error-msg"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard (hidden until auth) -->
+    <div id="dashboard" class="dashboard-container hidden">
+        <header class="top-header">
+            <div class="header-titles">
+                <h1>Hostel Management Dashboard</h1>
+                <p>Complaint Monitoring System</p>
+            </div>
+            <div class="header-actions">
+                <div class="datetime" id="datetime-display"></div>
+                <button id="theme-toggle" class="icon-btn"><i class="fa-solid fa-moon"></i></button>
+                <button id="export-btn" class="action-btn"><i class="fa-solid fa-download"></i> Export JSON</button>
+                <button id="logout-btn" class="action-btn" style="background: var(--danger); color: white;"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+            </div>
+        </header>
+
+        <section class="summary-cards">
+            <div class="card total-card">
+                <div class="card-icon"><i class="fa-solid fa-list"></i></div>
+                <div class="card-content">
+                    <h3>Total Complaints</h3>
+                    <h2 id="count-total">0</h2>
+                </div>
+            </div>
+            <div class="card pending-card">
+                <div class="card-icon"><i class="fa-solid fa-clock"></i></div>
+                <div class="card-content">
+                    <h3>Pending</h3>
+                    <h2 id="count-pending">0</h2>
+                </div>
+            </div>
+            <div class="card progress-card">
+                <div class="card-icon"><i class="fa-solid fa-spinner"></i></div>
+                <div class="card-content">
+                    <h3>In Progress</h3>
+                    <h2 id="count-progress">0</h2>
+                </div>
+            </div>
+            <div class="card resolved-card">
+                <div class="card-icon"><i class="fa-solid fa-check-circle"></i></div>
+                <div class="card-content">
+                    <h3>Resolved</h3>
+                    <h2 id="count-resolved">0</h2>
+                </div>
+            </div>
+            <div class="card priority-card">
+                <div class="card-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="card-content">
+                    <h3>High Priority</h3>
+                    <h2 id="count-high">0</h2>
+                </div>
+            </div>
+        </section>
+
+        <section class="controls-section">
+            <div class="search-bar">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" id="search-input" placeholder="Search by Name, Room, or ID...">
+            </div>
+            <div class="filters">
+                <select id="filter-status">
+                    <option value="all">All Status</option>
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Resolved">Resolved</option>
+                </select>
+                <select id="filter-category">
+                    <option value="all">All Categories</option>
+                    <option value="Electrical">Electrical</option>
+                    <option value="Plumbing">Plumbing</option>
+                    <option value="Internet">Internet</option>
+                    <option value="Cleaning">Cleaning</option>
+                    <option value="Furniture">Furniture</option>
+                    <option value="Other">Other</option>
+                </select>
+                <select id="sort-select">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="priority">Sort by Priority</option>
+                </select>
+            </div>
+        </section>
+
+        <section class="table-container">
+            <table id="complaints-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Student Name</th>
+                        <th>Room</th>
+                        <th>Category</th>
+                        <th>Priority</th>
+                        <th>Issue Description</th>
+                        <th>Date & Time</th>
+                        <th>Remarks</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- Dynamic Content -->
+                </tbody>
+            </table>
+            <div id="empty-state" class="empty-state hidden">
+                <i class="fa-solid fa-clipboard-check"></i>
+                <h3>No complaints found</h3>
+                <p>Try adjusting your search or filters.</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3><i class="fa-solid fa-triangle-exclamation" style="color: var(--danger);"></i> Confirm Deletion</h3>
+            <p>Are you sure you want to delete this complaint? This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button id="cancel-delete" class="secondary">Cancel</button>
+                <button id="confirm-delete" class="danger">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>

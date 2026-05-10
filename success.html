@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Success - Complaint Recorded</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #0f172a;
+            /* Match the dark theme in the screenshot */
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .success-card {
+            text-align: center;
+            max-width: 500px;
+            padding: 40px;
+        }
+
+        .check-icon {
+            font-size: 4rem;
+            background: #10b981;
+            color: white;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            margin: 0 auto 30px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        h3 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+
+        p {
+            color: #94a3b8;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+
+        .btn-close {
+            background: rgba(79, 70, 229, 0.1);
+            color: #818cf8;
+            border: 1px solid #4f46e5;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-close:hover {
+            background: #4f46e5;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="success-card">
+        <div class="check-icon">✓</div>
+        <h3>Your complaint has been recorded.</h3>
+        <p>The hostel administration has received your request.</p>
+        <button onclick="window.close()" class="btn-close">Close this window</button>
+    </div>
+</body>
+
+</html>

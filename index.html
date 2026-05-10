@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hostel Issue Tracker — Student Panel</title>
+  <meta name="description"
+    content="Submit and track your hostel complaints easily with the Hostel Issue Tracker student portal." />
+  <link rel="stylesheet" href="style.css" />
+  <!-- Supabase JS Library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+  <!-- Mobile Menu Toggle -->
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">☰</button>
+
+  <!-- Sidebar Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="app-layout">
+
+    <!-- ===== Sidebar ===== -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <a href="#" class="logo">
+          <div class="logo-icon">🏠</div>
+          <div>
+            <h1>Issue Tracker</h1>
+            <p>Student Portal</p>
+          </div>
+        </a>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-section="submit" id="navSubmit">
+          <span class="icon">📝</span>
+          <span>Submit Complaint</span>
+        </button>
+        <button class="nav-item" data-section="complaints" id="navComplaints">
+          <span class="icon">📋</span>
+          <span>My Complaints</span>
+        </button>
+        <button class="nav-item" data-section="help" id="navHelp">
+          <span class="icon">❓</span>
+          <span>Help &amp; Support</span>
+        </button>
+        <button class="nav-item" data-section="management" id="navManagement">
+          <span class="icon">🏢</span>
+          <span>Niat Management</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="dark-toggle" id="darkToggle">
+          <span class="icon">🌙</span>
+          <span>Dark Mode</span>
+          <div class="toggle-switch"></div>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ===== Main Content ===== -->
+    <main class="main-content">
+
+      <!-- Header -->
+      <header class="main-header">
+        <div class="header-inner">
+          <div>
+            <h2 id="headerTitle">Submit Complaint</h2>
+            <p id="headerSubtitle">Fill in the details below to report an issue</p>
+          </div>
+        </div>
+      </header>
+
+      <div class="page-content">
+
+        <!-- ========== SUBMIT SECTION ========== -->
+        <section class="section active" id="sectionSubmit">
+          <div class="form-card">
+            <div class="card-header">
+              <h3>📋 New Complaint</h3>
+              <p>All fields marked with <span style="color:var(--accent)">*</span> are required</p>
+            </div>
+
+            <form id="complaintForm" novalidate>
+              <div class="form-grid">
+
+                <!-- NIAT ID -->
+                <div class="form-group">
+                  <label for="niatId">NIAT ID <span class="required">*</span></label>
+                  <input type="text" id="niatId" placeholder="Enter your NIAT ID" required />
+                  <span class="error-msg" id="errNiat">Invalid NIAT ID</span>
+                </div>
+
+                <!-- Student Name -->
+                <div class="form-group">
+                  <label for="studentName">Student Full Name <span class="required">*</span></label>
+                  <input type="text" id="studentName" placeholder="Auto-filled name" readonly required />
+                  <span class="error-msg" id="errName">Please enter your full name</span>
+                </div>
+
+                <!-- Room Number -->
+                <div class="form-group">
+                  <label for="roomNumber">Room Number <span class="required">*</span></label>
+                  <input type="text" id="roomNumber" placeholder="e.g. A-204" required />
+                  <span class="error-msg" id="errRoom">Please enter a valid room number</span>
+                </div>
+
+                <!-- Category -->
+                <div class="form-group">
+                  <label for="category">Complaint Category <span class="required">*</span></label>
+                  <select id="category" required>
+                    <option value="">Select category</option>
+                    <option value="Mess">🍽️ Mess</option>
+                    <option value="Water">💧 Water</option>
+                    <option value="Wi-Fi">📶 Wi-Fi</option>
+                    <option value="Electricity">⚡ Electricity</option>
+                    <option value="Cleanliness">🧹 Cleanliness</option>
+                    <option value="Plumbing">🔧 Plumbing</option>
+                    <option value="Other">📦 Other</option>
+                  </select>
+                  <span class="error-msg" id="errCategory">Please select a category</span>
+                </div>
+
+                <!-- Priority -->
+                <div class="form-group">
+                  <label for="priority">Priority Level <span class="required">*</span></label>
+                  <select id="priority" required>
+                    <option value="">Select priority</option>
+                    <option value="High">🔴 High</option>
+                    <option value="Medium">🟡 Medium</option>
+                    <option value="Low">🟢 Low</option>
+                  </select>
+                  <span class="error-msg" id="errPriority">Please select a priority level</span>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group full-width">
+                  <label for="description">Complaint Description <span class="required">*</span></label>
+                  <textarea id="description" rows="4" placeholder="Describe your issue in detail..."
+                    required></textarea>
+                  <span class="error-msg" id="errDesc">Please describe the issue</span>
+                </div>
+
+                <!-- File Upload -->
+                <div class="form-group full-width">
+                  <label>Upload Image/Video (optional)</label>
+                  <div class="file-upload-area" id="uploadArea">
+                    <div class="upload-icon">📷</div>
+                    <p>Click or drag & drop an image or video here</p>
+                    <p style="font-size:11px;margin-top:4px">PNG, JPG, MP4 up to 50MB</p>
+                    <div class="file-name" id="fileName"></div>
+                    <input type="file" id="fileInput" accept="image/*,video/*" />
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Submit Button -->
+              <button type="submit" class="btn-submit" id="submitBtn">
+                <span class="spinner"></span>
+                <span class="btn-text">Submit Complaint</span>
+              </button>
+            </form>
+          </div>
+        </section>
+
+        <!-- ========== MY COMPLAINTS SECTION ========== -->
+        <section class="section" id="sectionComplaints">
+
+          <!-- Stats Bar -->
+          <div class="stats-bar" id="statsBar">
+            <div class="stat-card">
+              <div class="stat-icon">📋</div>
+              <div class="stat-info">
+                <div class="stat-number" id="statTotal">0</div>
+                <div class="stat-label">Total</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">🕐</div>
+              <div class="stat-info">
+                <div class="stat-number" id="statPending">0</div>
+                <div class="stat-label">Pending</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">🔄</div>
+              <div class="stat-info">
+                <div class="stat-number" id="statProgress">0</div>
+                <div class="stat-label">In Progress</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">✅</div>
+              <div class="stat-info">
+                <div class="stat-number" id="statResolved">0</div>
+                <div class="stat-label">Resolved</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Toolbar -->
+          <div class="complaints-toolbar">
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="searchInput" placeholder="Search by Complaint ID..." />
+            </div>
+            <select class="filter-select" id="filterStatus">
+              <option value="all">All Status</option>
+              <option value="Pending">🕐 Pending</option>
+              <option value="In Progress">🔄 In Progress</option>
+              <option value="Resolved">✅ Resolved</option>
+            </select>
+          </div>
+
+          <!-- Complaints List -->
+          <div class="complaints-list" id="complaintsList"></div>
+
+        </section>
+
+        <!-- ========== HELP SECTION ========== -->
+        <section class="section" id="sectionHelp">
+
+          <div class="help-cards">
+            <div class="help-card">
+              <div class="help-icon">📞</div>
+              <h4>Hostel Secretary & Mess Secretary</h4>
+              <p class="contact-name">Indra Kiran Reddy</p>
+              <a href="tel:+917013658549" class="contact-number">+91 70136 58549</a>
+            </div>
+            <div class="help-card">
+              <div class="help-icon">🛡️</div>
+              <h4>Boys Warden</h4>
+              <p class="contact-name">Suresh</p>
+              <a href="tel:+919581038966" class="contact-number">+91 95810 38966</a>
+            </div>
+            <div class="help-card">
+              <div class="help-icon">👩‍🏫</div>
+              <h4>Girls Warden</h4>
+              <p class="contact-name">Saritha</p>
+              <a href="tel:+916301038798" class="contact-number">+91 63010 38798</a>
+            </div>
+          </div>
+
+          <div class="help-info">
+            <h4>📖 How to use the Issue Tracker</h4>
+            <ul>
+              <li>
+                <span class="icon">1️⃣</span>
+                <span>Navigate to <strong>Submit Complaint</strong> from the sidebar menu.</span>
+              </li>
+              <li>
+                <span class="icon">2️⃣</span>
+                <span>Fill in all required fields — your name, room number, category, priority, and a detailed
+                  description of the issue.</span>
+              </li>
+              <li>
+                <span class="icon">3️⃣</span>
+                <span>Optionally attach a photo of the issue to help the hostel team understand the problem
+                  better.</span>
+              </li>
+              <li>
+                <span class="icon">4️⃣</span>
+                <span>Click <strong>Submit Complaint</strong> and you'll receive a unique Complaint ID for
+                  tracking.</span>
+              </li>
+              <li>
+                <span class="icon">5️⃣</span>
+                <span>Go to <strong>My Complaints</strong> to view, search, and filter all your submitted complaints and
+                  their current status.</span>
+              </li>
+              <li>
+                <span class="icon">6️⃣</span>
+                <span>If your issue is urgent, please also contact the hostel warden or emergency helpline
+                  directly.</span>
+              </li>
+            </ul>
+          </div>
+
+        </section>
+        
+        <!-- ========== MANAGEMENT SECTION ========== -->
+        <section class="section" id="sectionManagement">
+          <div class="form-card">
+            <div class="card-header">
+              <h3>🏢 Niat Management Contact</h3>
+              <p>For official inquiries and administrative support</p>
+            </div>
+            <div class="help-cards" style="margin-top: 20px;">
+              <div class="help-card" style="width: 100%; max-width: none;">
+                <div class="help-icon">✉️</div>
+                <h4>Email Support</h4>
+                <a href="mailto:hostels@nxtwave.co.in" class="contact-number">hostels@nxtwave.co.in</a>
+              </div>
+              <div class="help-card" style="width: 100%; max-width: none; margin-top: 20px;">
+                <div class="help-icon">📱</div>
+                <h4>Phone Support</h4>
+                <a href="tel:+919248701575" class="contact-number">+91 92487 01575</a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+
+</html>
