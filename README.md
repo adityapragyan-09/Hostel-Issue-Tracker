@@ -83,6 +83,14 @@ Ensure your tables have RLS enabled to prevent unauthorized access. Run the foll
 ```sql
 -- Enable RLS
 ALTER TABLE complaints ENABLE ROW LEVEL SECURITY;
+
+-- CREATE STUDENTS TABLE
+CREATE TABLE students (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  niat_id TEXT UNIQUE NOT NULL,
+  student_name TEXT NOT NULL
+);
+
 ALTER TABLE students ENABLE ROW LEVEL SECURITY;
 
 -- STUDENTS TABLE POLICIES
