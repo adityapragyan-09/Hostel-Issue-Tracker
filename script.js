@@ -25,7 +25,7 @@ async function getStudentId() {
     const { data, error } = await supabaseClient
       .from('students')
       .select('"Student Full Name"')
-      .eq('NIAT ID', formattedId)
+      .eq('"NIAT ID"', formattedId)
       .single();
 
     if (error || !data) {
@@ -272,7 +272,7 @@ async function validateForm() {
     const { data, error } = await supabaseClient
       .from('students')
       .select('"Student Full Name"')
-      .eq('NIAT ID', formattedId)
+      .eq('"NIAT ID"', formattedId)
       .single();
       
     if (error || !data) {
@@ -349,7 +349,7 @@ document.getElementById('niatId').addEventListener('input', function () {
       const { data, error } = await supabaseClient
         .from('students')
         .select('"Student Full Name"')
-        .eq('NIAT ID', id)
+        .eq('"NIAT ID"', id)
         .single();
         
       if (data && !error) {
