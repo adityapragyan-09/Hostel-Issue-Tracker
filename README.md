@@ -84,21 +84,6 @@ Ensure your tables have RLS enabled to prevent unauthorized access. Run the foll
 -- Enable RLS
 ALTER TABLE complaints ENABLE ROW LEVEL SECURITY;
 
--- CREATE STUDENTS TABLE
-CREATE TABLE students (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  niat_id TEXT UNIQUE NOT NULL,
-  student_name TEXT NOT NULL
-);
-
-ALTER TABLE students ENABLE ROW LEVEL SECURITY;
-
--- STUDENTS TABLE POLICIES
--- Allow anyone to read a specific student's name by NIAT ID
-CREATE POLICY "Public read access to student names"
-ON students FOR SELECT 
-USING (true);
-
 -- COMPLAINTS TABLE POLICIES
 -- 1. Students can insert complaints
 CREATE POLICY "Students can insert complaints" 
