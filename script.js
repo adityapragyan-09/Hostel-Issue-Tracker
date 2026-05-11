@@ -24,8 +24,8 @@ async function getStudentId() {
     
     const { data, error } = await supabaseClient
       .from('students')
-      .select('student_name')
-      .eq('niat_id', formattedId)
+      .select('"Student Full Name"')
+      .eq('NIAT ID', formattedId)
       .single();
 
     if (error || !data) {
@@ -34,6 +34,7 @@ async function getStudentId() {
     }
 
     id = formattedId;
+    const studentName = data["Student Full Name"];
     
     // Store permanently in localStorage and temporarily in sessionStorage
     localStorage.setItem('user_id', id);
@@ -270,15 +271,15 @@ async function validateForm() {
   } else {
     const { data, error } = await supabaseClient
       .from('students')
-      .select('student_name')
-      .eq('niat_id', formattedId)
+      .select('"Student Full Name"')
+      .eq('NIAT ID', formattedId)
       .single();
       
     if (error || !data) {
       showError(niatId, 'errNiat');
       valid = false;
     } else {
-      name.value = data.student_name;
+      name.value = data["Student Full Name"];
     }
   }
 
@@ -347,12 +348,12 @@ document.getElementById('niatId').addEventListener('input', function () {
     try {
       const { data, error } = await supabaseClient
         .from('students')
-        .select('student_name')
-        .eq('niat_id', id)
+        .select('"Student Full Name"')
+        .eq('NIAT ID', id)
         .single();
         
       if (data && !error) {
-        nameField.value = data.student_name;
+        nameField.value = data["Student Full Name"];
         nameField.classList.remove('error');
         document.getElementById('errNiat').classList.remove('show');
       } else {
