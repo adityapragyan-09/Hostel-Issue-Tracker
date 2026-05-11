@@ -1,50 +1,57 @@
 // --- SUPABASE CONFIGURATION ---
-const SUPABASE_URL = window.SUPABASE_URL;
-const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_URL = window.SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || '';
+let supabaseClient = null;
+
+try {
+    if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } else {
+        console.warn("Supabase credentials missing. Check config.js or Netlify Environment Variables.");
+    }
+} catch (e) {
+    console.error("Supabase initialization failed:", e);
+}
 
 let dbComplaints = [];
 let studentRealtimeInitialized = false;
 
+console.log("Hostel Tracker: Script loading...");
+
 // ===== Student ID Management (NIAT ID) =====
-async function getStudentId() {
-  // Try to get from localStorage first, then sessionStorage as backup
+async function getStudentId(forcePrompt = false) {
+  // Try to get from localStorage first
   let id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
 
-  if (!id) {
+  if (!id && forcePrompt) {
     id = prompt("Enter your NIAT ID (e.g. NIAT001)");
 
-    // Validation: At least 5 characters and must be in our dataset
     if (!id || id.trim().toUpperCase().length < 5) {
       alert("Please enter a valid NIAT ID");
-      return await getStudentId(); // Re-prompt
+      return await getStudentId(true); // Re-prompt
     }
     
     const formattedId = id.trim().toUpperCase();
     
-    const { data, error } = await supabaseClient
-      .from('students')
-      .select('"Student Full Name"')
-      .eq('"NIAT ID"', formattedId)
-      .single();
+    try {
+        const { data, error } = await supabaseClient
+          .from('students')
+          .select('*')
+          .eq('NIAT ID', formattedId)
+          .single();
 
-    if (error || !data) {
-      alert("Invalid NIAT ID. Please contact the administrator.");
-      return await getStudentId();
+        if (error || !data) {
+          alert("Invalid NIAT ID. Please contact the administrator.");
+          return await getStudentId(true);
+        }
+
+        id = formattedId;
+        localStorage.setItem('user_id', id);
+        localStorage.setItem('student_name', data["Student Full Name"]);
+    } catch (e) {
+        console.error("Auth error", e);
     }
-
-    id = formattedId;
-    const studentName = data["Student Full Name"];
-    
-    // Store permanently in localStorage and temporarily in sessionStorage
-    localStorage.setItem('user_id', id);
-    sessionStorage.setItem('user_id', id);
-  } else {
-    // If found in one but not the other, sync them
-    if (!localStorage.getItem('user_id')) localStorage.setItem('user_id', id);
-    if (!sessionStorage.getItem('user_id')) sessionStorage.setItem('user_id', id);
   }
-
   return id;
 }
 
@@ -269,17 +276,26 @@ async function validateForm() {
     showError(niatId, 'errNiat');
     valid = false;
   } else {
-    const { data, error } = await supabaseClient
-      .from('students')
-      .select('"Student Full Name"')
-      .eq('"NIAT ID"', formattedId)
-      .single();
-      
-    if (error || !data) {
-      showError(niatId, 'errNiat');
-      valid = false;
-    } else {
-      name.value = data["Student Full Name"];
+    try {
+        const { data, error } = await supabaseClient
+          .from('students')
+          .select('*')
+          .eq('NIAT ID', formattedId)
+          .single();
+          
+        if (error || !data) {
+          showError(niatId, 'errNiat');
+          valid = false;
+        } else {
+          name.value = data["Student Full Name"];
+          // Log them in if they aren't already
+          if (!localStorage.getItem('user_id')) {
+              localStorage.setItem('user_id', formattedId);
+              localStorage.setItem('student_name', data["Student Full Name"]);
+          }
+        }
+    } catch (e) {
+        valid = false;
     }
   }
 
@@ -346,10 +362,11 @@ document.getElementById('niatId').addEventListener('input', function () {
 
   debounceTimer = setTimeout(async () => {
     try {
+      if (!supabaseClient) return;
       const { data, error } = await supabaseClient
         .from('students')
-        .select('"Student Full Name"')
-        .eq('"NIAT ID"', id)
+        .select('*')
+        .eq('NIAT ID', id)
         .single();
         
       if (data && !error) {
@@ -367,7 +384,7 @@ document.getElementById('niatId').addEventListener('input', function () {
 
 // ===== Submit Complaint =====
 async function submitComplaint() {
-  const user_id = await getStudentId();
+  const user_id = await getStudentId(true);
   if (!user_id) return;
 
   // Form Field Validation & Trimming
@@ -720,18 +737,22 @@ function setupRealtime(user_id) {
 
 // ===== Init =====
 async function init() {
-  // Ensure ID exists before doing anything
-  const user_id = await getStudentId();
-  if (!user_id) return;
+  console.log("Checking database connection...");
+  try {
+      const { data, error } = await supabaseClient.from('students').select('*').limit(1);
+      if (error) console.error("Database Test Error:", error);
+      else console.log("Database Test Success! First student columns:", Object.keys(data[0] || {}));
+  } catch(e) { console.error("Database Crash:", e); }
 
-  // 1. Initial Load
-  fetchComplaints();
+  const user_id = await getStudentId(false); // No blocking prompt
 
-  // 2. Setup Instant Real-Time Updates
-  setupRealtime(user_id);
-
-  // 3. Fallback Auto-refresh (every 60 seconds)
-  setInterval(fetchComplaints, 60000);
+  // Fallback Auto-refresh (every 60 seconds)
+  setInterval(() => {
+      const currentId = localStorage.getItem('user_id');
+      if (currentId) fetchComplaints();
+  }, 60000);
 }
 
 init();
+
+console.log("Hostel Tracker: Script fully loaded.");
